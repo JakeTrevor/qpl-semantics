@@ -1,0 +1,3 @@
+(A) 2026-07-21 Figure out how to organise this project
+(A) 2026-07-21 implement instances for semantic subsumption
+(A) 2026-07-21 implement GES stuff
