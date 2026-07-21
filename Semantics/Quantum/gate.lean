@@ -56,6 +56,11 @@ def AppDens {n} (g : Gate n) (ρ : DensityOp n) : DensityOp n :=
 @[simp]
 def Compose {n} (g1 g2 : Gate n) : Gate n := g1 * g2
 
+namespace Compose
+scoped infixr:100 " ∘ " => Compose
+
+end Compose
+
 @[simp]
 def isID (g : Gate n) : Prop := ∀σ, (g.App σ) = σ
 
@@ -242,7 +247,7 @@ end Involutive
 Given a gate of size `n`, extend the gate to operate on `m` extra qubits on the right
 -/
 @[simp]
-def LiftRightBy {n} (g : Gate n) (k : ℕ) : Gate (n + k) := match k with
+def LiftRightBy {n} (k : ℕ) (g : Gate n) : Gate (n + k) := match k with
   | 0 => g
   | k' + 1 => cast (by ring_nf) ((g.LiftRightBy k') ⨂ StdGates.ID)
 
@@ -250,30 +255,32 @@ def LiftRightBy {n} (g : Gate n) (k : ℕ) : Gate (n + k) := match k with
 Given a gate of size `n`, extend the gate to operate on `m` extra qubits on the left
 -/
 @[simp]
-def LiftLeftBy {n} (g : Gate n) (k : ℕ) : Gate (n + k) :=
+def LiftLeftBy {n} (k : ℕ) (g : Gate n)  : Gate (n + k) :=
 match k with
   | 0 => g
   | k' + 1 =>
     let p : (1 + (n + k')) = (n + (k' + 1)) := by ring;
-    p ▸ (StdGates.ID ⨂ (LiftLeftBy g k'))
+    p ▸ (StdGates.ID ⨂ (LiftLeftBy k' g))
 
 /--
 Given a gate of size `n`, and a target width `m >= n`,
 lift the gate (tensor in `ID`s) to the matching size
 -/
-def LiftRight {n} (g : Gate n) (h : n <= m) : Gate m :=
+@[simp]
+def LiftRight {n} (h : n <= m) (g : Gate n) : Gate m :=
   cast (by
     suffices n + (m - n) = m by rw [this]
     apply Nat.add_sub_cancel' h
   ) (g.LiftRightBy (m - n))
 
-def LiftLeft (g : Gate n) (h : n <= m) : Gate m :=
+@[simp]
+def LiftLeft (h : n <= m) (g : Gate n) : Gate m :=
   cast (by
     suffices n + (m - n) = m by rw [this]
     apply Nat.add_sub_cancel' h
   ) (g.LiftRightBy (m - n))
 
-
+@[simp]
 def Controlled {n} (g : Gate n) : Gate (n + 1) :=
 (Matrix.fromBlocks (StdGates.ID.mk n) 0 0 g).reindex QSpace.equiv QSpace.equiv
 

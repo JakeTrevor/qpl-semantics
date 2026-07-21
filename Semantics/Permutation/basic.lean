@@ -11,6 +11,43 @@ abbrev Perm (n : ℕ) := PartialPerm n n
 
 namespace Perm
 
+@[simp]
+def id {k : ℕ}: Perm k := ⟨fun x => x, by
+  intro a b c
+  simp_all
+  ⟩
+
+/--
+  Do a, then b
+-/
+@[simp]
+def compose (a b : Perm k) : Perm k
+  := ⟨b.1 ∘ a.1, by
+    rcases a with ⟨a, pa⟩
+    rcases b with ⟨b, pb⟩
+    simp_all
+  ⟩
+
+lemma compose_assoc (a b c : Perm k)
+  : (a.compose b).compose c = a.compose (b.compose c)
+  := by simp only [Perm.compose, Function.comp_assoc]
+
+lemma id_compose (p : Perm k)
+  : Perm.id.compose p = p
+  := by
+    rcases p with ⟨p, hp⟩
+    apply Subtype.ext
+    ext
+    simp
+
+lemma compose_id (p : Perm k)
+  : p.compose Perm.id = p
+  := by
+    rcases p with ⟨p, hp⟩
+    apply Subtype.ext
+    ext
+    simp
+
 lemma bijective (p : Perm n) : p.1.Bijective := by
   rw [Fintype.bijective_iff_injective_and_card]
   apply And.intro
@@ -147,6 +184,16 @@ lemma inv_is_inv (p : Perm n) : p.1 i = j <-> p.invert.1 j = i
 lemma inv_is_inv2 (p : Perm n) : p.1 (p.invert.1 x) = x
   := by rw [inv_is_inv]
 
+
+lemma inv_is_inv3 (p : Perm n) :  p.compose p.invert = id
+  := by
+    simp only [compose]
+    congr
+    ext x
+    congr
+    rw [Function.comp_apply]
+    rw [←inv_is_inv]
+
 def castLT_inj (n m : ℕ) (i j : Fin n) {hi : i < m} {hj : j < m}
   : i.castLT hi = j.castLT hj -> i = j
   := by
@@ -196,9 +243,40 @@ def drop (p : Perm (n + 1))
 
 end Perm
 
-#print axioms Perm.drop
-
 namespace PartialPerm
+
+
+/--
+  Do a, then b
+-/
+@[simp]
+def compose (a : PartialPerm x y) (b : Perm y): PartialPerm x y
+  := ⟨b.1 ∘ a.1, by
+    rcases a with ⟨a, pa⟩
+    rcases b with ⟨b, pb⟩
+    simp_all
+  ⟩
+
+lemma compose_id (p : PartialPerm x y)
+  : p.compose Perm.id = p
+  := by
+    rcases p with ⟨p, hp⟩
+    apply Subtype.ext
+    ext
+    simp
+
+def upcast (p : PartialPerm a n) (h : n <= m)
+  : PartialPerm a m
+  := ⟨fun x =>
+    (p.1 x).castLT (by omega),
+    by
+      unfold Function.Injective
+      simp [Fin.castLT]
+      intro a b h
+      apply @p.2 a b
+      exact Fin.eq_of_val_eq h
+    ⟩
+
 
 def increment (h : a < n) (p : PartialPerm a n)
   : PartialPerm (a+1) n
