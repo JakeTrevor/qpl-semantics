@@ -16,6 +16,7 @@
         "recursor",
         "refl",
         "regref",
+        "semiring",
         "simp",
         "submatrix",
         "succ",
