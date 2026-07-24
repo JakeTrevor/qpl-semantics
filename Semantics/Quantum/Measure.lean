@@ -2,43 +2,61 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.LinearAlgebra.Matrix.Kronecker
 import Mathlib.Data.Matrix.Basic
 
+import Semantics.Quantum.Gate
 import Semantics.Quantum.QuantumState
 
 open scoped Matrix
 
-def MFalse : DensityOp 1 :=
+variable {α} [CommRing α] [StarRing α]
+
+def MFalse : Gate 1 α :=
   !![1, 0;
      0, 0]
 
-def MTrue : DensityOp 1 :=
+def MTrue : Gate 1 α :=
   !![0, 0;
      0, 1]
 
+
+def MTrueLeft (n : ℕ) (h : n >= 1) : Gate n α :=
+  MTrue.LiftLeft h
+
+def MFalseLeft (n : ℕ) (h : n >= 1) : Gate n α :=
+  MFalse.LiftLeft h
+
+
 @[simp]
-def DensityOp.measureLeft (x : DensityOp (n +1))  : DensityOp (n + 1) :=
-  let x' : Matrix (Fin (2^n + 2^n)) (Fin (2^n + 2^n)) ℂ := cast (by
-    unfold DensityOp
-    congr
-    <;> {
-      unfold QSpace
-      simp
-      ring_nf
-    }
-  ) x;
+def DensityOp.measureLeft
+  (x : DensityOp (n +1) α)
+  : DensityOp (n + 1) α
+  :=
+  let x' : Matrix (Fin (2^n + 2^n)) (Fin (2^n + 2^n)) α
+    := cast (by
+      unfold DensityOp
+      congr
+      <;> {
+        unfold QSpace
+        simp
+        ring_nf
+      }
+    ) x;
   let topLeft := x'.subUp.subLeft;
   let bottomRight := x'.subDown.subRight;
-  (Matrix.fromBlocks topLeft 0 0 bottomRight).reindex QSpace.equiv QSpace.equiv
+  (Matrix.fromBlocks topLeft 0 0 bottomRight).reindex QSpace.coprod_equiv QSpace.coprod_equiv
 
 namespace DensityOp.measureLeft
 
 @[simp]
-def alt1 (x : DensityOp (n +1))  : DensityOp (n + 1) :=
-  fun i j =>
-    if i < 2^n ∧ j < 2^n then x i j else
-    if i > 2^n ∧ j > 2^n then x i j
-    else 0
+def alt1
+  (x : DensityOp (n +1) α)
+  : DensityOp (n + 1) α
+  := fun i j =>
+      if i < 2^n ∧ j < 2^n then x i j else
+      if i > 2^n ∧ j > 2^n then x i j
+      else 0
 
-def equiv1 (x : DensityOp (n + 1))
+def equiv1
+  (x : DensityOp (n + 1) α)
   : x.measureLeft = alt1 x
   := by
     ext i j
@@ -48,8 +66,21 @@ def equiv1 (x : DensityOp (n + 1))
     case neg => sorry
 
 
-lemma trace
-  :  ∀ (x : DensityOp (n +1)), x.traceLeft = x.measureLeft.traceLeft
+lemma meas_idem
+  :  ∀ (x : DensityOp (n +1) α),
+    x.measureLeft = x.measureLeft.measureLeft
+  := by
+      intros x
+      ext i j
+      unfold DensityOp.measureLeft
+      congr
+      simp_all --(this is basically unreadable. I should probably look into better definitions for this.)
+      sorry
+
+
+lemma trace_meas
+  :  ∀ (x : DensityOp (n +1) α),
+    x.traceLeft = x.measureLeft.traceLeft
   := by
       intros x
       ext i j

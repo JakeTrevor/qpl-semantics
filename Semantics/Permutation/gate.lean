@@ -2,21 +2,25 @@ import Semantics.Permutation.Basic
 import Semantics.Permutation.matrix
 import Semantics.Quantum.Gate
 
+variable {α} [CommRing α] [StarRing α]
+set_option linter.unusedSectionVars false
+open scoped HTensor
 namespace StdGates
 
-lemma ID.isPerm : StdGates.ID.isPerm := by
+
+lemma ID.isPerm : (StdGates.ID α).isPerm := by
   intro i
   apply And.intro
     <;> fin_cases i
     <;> simp [StdGates.ID]
 
-lemma X.isPerm : StdGates.X.isPerm := by
+lemma X.isPerm : (StdGates.X α).isPerm := by
   intro i
   apply And.intro
     <;> fin_cases i
     <;> simp [StdGates.X]
 
-lemma CX.isPerm : StdGates.CX.isPerm := by
+lemma CX.isPerm : (StdGates.CX α).isPerm := by
   intro i
   fin_cases i
     <;> apply And.intro
@@ -31,7 +35,7 @@ lemma CX.isPerm : StdGates.CX.isPerm := by
   next => exists 2; intro j; fin_cases j <;> simp
 
 
-lemma SWAP.isPerm : StdGates.SWAP.isPerm := by
+lemma SWAP.isPerm : (StdGates.SWAP α).isPerm := by
   intro i
   fin_cases i
     <;> apply And.intro
@@ -70,40 +74,54 @@ lemma helper : ∀ (a b c : ℕ),
     intro a b c
     omega
 
-def swizzle (diff : Fin n) : Gate n :=
+def swizzle (diff : Fin n) : Gate n α :=
   match h : diff with
-  | ⟨0, _⟩ => StdGates.ID.mk _
-  | ⟨1, _⟩ => StdGates.ID.mk _
+  | ⟨0, _⟩ => StdGates.ID.mk α _
+  | ⟨1, _⟩ => StdGates.ID.mk α _
   | ⟨x+2, p⟩ => (swizzle ⟨x + 1, (by omega)⟩).Compose <|
     cast (by
-      suffices (n - (x + 2) + 2 + (x + 2 - 2)) = n by
+      suffices (n - (x + 2) + 2) + ((x + 2) - 2) = n by
         rw [this]
       have h :
-        n - (x + 2) + 2 + (x + 2 - 2)
+        (n - (x + 2) + 2) + ((x + 2) - 2)
         = n - (x + 2 - 2) + (x + 2 - 2)
         := by
           have p1 : n >= (x + 2) := by omega
           have p2 : (x + 2) >= 2 := by omega
-          rw [helper _ _ _ p1 p2]
+          omega
       rw [h]
       omega
     )
-    (((StdGates.ID.mk (n - (x + 2)))
-      ⨂ (StdGates.SWAP))
-      ⨂ (StdGates.ID.mk (((x + 2) - 2))))
+    (
+      (
+        (StdGates.ID.mk α (n - (x + 2)))
+      ⨂
+        (StdGates.SWAP α)
+      : Gate ((n - (x + 2)) + 2) α
+      )
+    ⨂
+      (StdGates.ID.mk α (((x + 2) - 2)))
+    : Gate ((n - (x + 2) + 2) + ((x + 2) - 2)) α
+    )
 
 -- Convert L to a perm n-1
-def toGate (p : Perm n)
-  : Gate n
+def toGate
+  α [CommRing α] [StarRing α]
+  (p : Perm n)
+  : Gate n α
   := match n with
-  | 0 => StdGates.Trivial
-  | _ + 1 => ((toGate p.drop) ⨂ StdGates.ID).Compose (swizzle <| p.invert.1 (Fin.last _))
+  | 0 => StdGates.Trivial α
+  | _ + 1 => (
+        (toGate α p.drop) ⨂ StdGates.ID α)
+      *
+        (swizzle <| p.invert.1 (Fin.last _)
+      )
 
 -- probably prove via
 -- perm ⨂ perm = perm
 -- perm ∘ perm = perm
 theorem toGate_is_perm
-  : ∀ (l : Perm n), l.toGate.isPerm
+  : ∀ (l : Perm n), (l.toGate α).isPerm
   := by sorry
 
 end Perm

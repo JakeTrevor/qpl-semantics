@@ -3,8 +3,9 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Tactic.FinCases
 
+variable {α} [CommSemiring α] [StarRing α]
 
-def Matrix.isPerm {n : Nat} (m: Matrix (Fin n) (Fin n) ℂ) : Prop :=
+def Matrix.isPerm {n : Nat} (m: Matrix (Fin n) (Fin n) α) : Prop :=
   ∀ i,
     (∃ k, ∀ j, m i j = if j == k then 1 else 0) /\
     (∃ k, ∀ j, m j i = if j == k then 1 else 0)
