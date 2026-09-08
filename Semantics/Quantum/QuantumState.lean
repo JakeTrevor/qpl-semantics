@@ -109,10 +109,10 @@ def kronecker_flat {α : Type _} [Mul α] {n m : ℕ}
     let i₂ : Fin m := ⟨i.val % m, by
       apply Nat.mod_lt
       cases m
-      case hy.zero =>
+      case zero =>
         cases i
         contradiction
-      case hy.succ => simp
+      case succ => simp
       ⟩
     (p i₁) * (q i₂)
 

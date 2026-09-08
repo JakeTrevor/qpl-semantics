@@ -21,7 +21,7 @@ theorem trans_inv {n} {x : Matrix (Fin n) (Fin n) ℂ} :
     ext i j
     simp [Matrix.mul_apply]
     cases p : i == j
-    case a.false =>
+    case false =>
       suffices ∀ q, x i q * x j q = 0 by
         simp [this, Fin.nbeq_neq p]
       intros q
@@ -35,7 +35,7 @@ theorem trans_inv {n} {x : Matrix (Fin n) (Fin n) ℂ} :
       simp at p
       intro z
       exact p z.symm
-    case a.true =>
+    case true =>
       simp at p
       simp [Matrix.one_apply]
       subst p

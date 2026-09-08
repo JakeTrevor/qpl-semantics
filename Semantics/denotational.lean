@@ -1,13 +1,32 @@
-import Semantics.Langs.common
+import Semantics.Quantum.Gate
+import Semantics.Quantum.GES
 import Semantics.container
+
 
 class Semantics α β where
   sem : α -> β
 
+@[simp]
+abbrev explicitSem {A} (B) := @Semantics.sem A B
+
 notation "D""⟦ " x " ⟧" => Semantics.sem x
+notation "D""⟦ " x " ⟧""@" B => explicitSem B x
+
+
+/-
+  read "A subsumes B"
+  true if there's a semantics preserving function B -> A
+-/
+def Semantics.Subsumes (B A) {Y}
+  [Semantics A Y] [Semantics B Y]
+  : Prop
+  := ∃ (f : B -> A), ∀x, (D⟦x⟧@Y) = D⟦f x⟧
+
+infix:100 " ≺ " => Semantics.Subsumes
+notation:100 B " ≺[" Y "] " A  => @Semantics.Subsumes B A Y _ _
 
 -- We can define the semantics of simple coproducts like so:
-instance [Semantics α S] [Semantics β S]
+instance coprodSem [Semantics α S] [Semantics β S]
     : Semantics (α ⊕ β) S
   where sem
     | .inl a => D⟦a⟧
@@ -23,6 +42,7 @@ instance [Semantics α S] [Semantics β S]
   If we know how to compress (a b : Container) over Ys to a single Y,
   then we can do it for their coproduct over Ys
 -/
+@[simp]
 def innerSem_container_coprod
   (a b : Container)
   [da : Semantics (a.extension Y) Y]
@@ -41,7 +61,7 @@ instance (a b : Container)
     sem := innerSem_container_coprod a b
 
 /- We can then use the recursor to give a semantics to the fixpoint: -/
-instance (c : Container)
+instance semContainerFix (c : Container)
     [inst : Semantics (c.extension Y) Y]
     : Semantics (c.fix) Y
   where
@@ -68,13 +88,18 @@ class Composable (X : Type) where
 namespace Composable
 scoped infix:100 " <> " => Composable.compose
 
+variable {α} [CommRing α] [StarRing α]
+
 /-
   And now we show that the various semantic styles for QC
   are indeed "composable"
 -/
-instance {i} : Composable (Gate i) where
+instance {i}  : Composable (Gate i α) where
   compose x y := x.Compose y
 
+/-
+  Functions are composable
+-/
 instance {α : Type} : Composable (α -> α) where
   compose f g a  := f <| g a
 
@@ -82,18 +107,19 @@ instance {α : Type} : Composable (α -> α) where
 end Composable
 open scoped Composable
 
-abbrev SuperOperator q := (DensityOp q -> DensityOp q)
+/-
+  Super operators are just functions
+-/
+abbrev SuperOperator q α := (DensityOp q α -> DensityOp q α )
 
--- Sanity check:
--- the above generic instance should work for super-operators
-#synth ∀ i, Composable (SuperOperator i)
+#synth ∀ i α, Composable (SuperOperator i α)
 
 /- Semantic subsumption:
   A semantics as gates gives us a semantics as
   a super-operator (for free)
 -/
-instance [Semantics A (Gate q)]
-  : Semantics A (SuperOperator q)
+instance {α} [CommRing α] [StarRing α] [Semantics A (Gate q α)]
+  : Semantics A (SuperOperator q α)
 where
     sem a ρ := Gate.AppDens D⟦a⟧ ρ
 
@@ -111,7 +137,7 @@ def innerSem_arity_0 [Semantics X Y]
   : ((Command X 0).extension Y) -> Y
   | ⟨x, _⟩ => D⟦@cast _ X (by simp) x⟧
 
-instance [Semantics X Y]
+instance autosem_a0 [Semantics X Y]
   : Semantics ((Command X 0).extension Y) Y where
   sem := innerSem_arity_0
 
@@ -124,3 +150,74 @@ instance [Semantics X Y] [Composable Y]
     : Semantics ((Command X 1).extension Y) Y
   where
     sem := innerSem_arity_1
+
+/-
+  Obviously, there is a semantics-preserving function from any A into itself
+-/
+lemma subsume_refl [Semantics A Y]
+  : A ≺[Y] A
+  := by
+    exists id
+    intro x
+    simp
+
+@[simp]
+def drop : a ⊕ a -> a
+ | .inl a => a
+ | .inr a => a
+
+lemma subsume_coprod_self [Semantics A Y] :
+  (A ⊕ A) ≺[Y] A
+  := by
+    exists drop
+    intro x
+    cases x
+    <;> simp [Semantics.sem]
+
+@[simp]
+def strip {C : Container} : (C :+: C).fix -> C.fix
+    := Container.recursor _ (fun a => match a with
+    | .mk ⟨.inl x, f⟩ => ⟨x, fun a => (f a)⟩
+    | .mk ⟨.inr x, f⟩ => ⟨x, fun a => (f a)⟩
+    )
+
+/-
+  Taking a coproduct of a thing with itself does not give you any semantic power (as long as you use the usual Semantics instance for container coproducts)
+-/
+lemma self_subsume_coprod_self {Y} (C : Container)
+  [CY_inst : Semantics (C.extension Y) Y]
+  : (C :+: C).fix ≺[Y] C.fix
+  := by
+    exists strip
+    intros x
+    simp [Semantics.sem]
+    induction x
+    case mk s f ih =>
+        rcases s with c | c
+        <;> (
+          simp [Container.recursor, innerSem_container_coprod];
+          congr;
+          ext a;
+          apply ih
+        )
+
+
+@[simp]
+def embed : C.fix -> (C :+: X).fix
+  := Container.recursor _ (fun x => match x with
+    | ⟨s, f⟩ => ⟨.inl s, fun a => f a⟩
+  )
+
+lemma coprod_any_subsume (C X: Container)
+  [CY_inst : Semantics (C.extension Y) Y]
+  [XY_inst : Semantics (X.extension Y) Y]
+  : C.fix ≺[Y] (C :+: X).fix
+  := by
+    exists embed
+    intro x
+    induction x
+    case mk s f ih =>
+      simp [Semantics.sem, Container.recursor]
+      congr
+      ext
+      apply ih

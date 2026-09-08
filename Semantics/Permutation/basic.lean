@@ -30,7 +30,9 @@ def compose (a b : Perm k) : Perm k
 
 lemma compose_assoc (a b c : Perm k)
   : (a.compose b).compose c = a.compose (b.compose c)
-  := by simp only [Perm.compose, Function.comp_assoc]
+  := by
+    simp only [Perm.compose, Function.comp_assoc]
+    rfl
 
 lemma id_compose (p : Perm k)
   : Perm.id.compose p = p

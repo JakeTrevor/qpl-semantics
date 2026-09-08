@@ -41,7 +41,7 @@ namespace Gate
 def size {n} : Gate n α -> ℕ := n
 
 @[simp]
-def App {n} [NonUnitalNonAssocSemiring α]
+def App {n}
   (g : Gate n α) (v : QuantumState n α)
   : QuantumState n α
   := Matrix.mulVec g v
@@ -53,7 +53,7 @@ open scoped App
 
 
 @[simp]
-def Inv {n} [Star α]
+def Inv {n}
   (g : Gate n α)
   : Gate n α
   := g.conjTranspose
@@ -61,7 +61,7 @@ def Inv {n} [Star α]
 namespace Inv
 scoped notation g "† " => Inv g
 end Inv
-open scoped Inv
+open scoped Gate.Inv
 
 @[simp]
 def AppDens {n}
@@ -171,7 +171,7 @@ lemma is_id : (@ID α).isID := by
   fin_cases i <;> simp
 
 
-lemma dagger [StarRing α]
+lemma dagger
   : ID α = (ID α)†
   := by
     ext i j
@@ -187,7 +187,7 @@ namespace mk
 lemma is_id : (ID.mk α x).isID := by
   exact Matrix.one_mulVec
 
-lemma dagger [StarRing α] : ID.mk α x = (ID.mk α x)†
+lemma dagger : ID.mk α x = (ID.mk α x)†
   := by simp
 
 lemma zero_trivial: ID.mk α 0 = Trivial α := by
@@ -454,7 +454,7 @@ lemma kronecker_flat_mul_cast
     intros a c b d
     grind
 
-lemma mulTensComm {n m : ℕ} [CommSemiring α]
+lemma mulTensComm {n m : ℕ}
   : ∀ (a c : Gate n α ) (b d : Gate m α),
     (a ⨂ b : Gate (n + m) α) * (c ⨂ d) = (a * c) ⨂ (b * d)
   := by
@@ -464,7 +464,7 @@ lemma mulTensComm {n m : ℕ} [CommSemiring α]
       rw [←this, kronecker_flat_mul_cast]
     exact kronecker_flat.mul a b c d
 
-lemma mulTensCommCast {n m : ℕ} [CommSemiring α]
+lemma mulTensCommCast {n m : ℕ}
   {h1 : (n + m) = b }
   : ∀ (a c : Gate n α) (b d : Gate m α),
     (h1 ▸ (a ⨂ b : Gate (n + m) α)) * (h1 ▸ (c ⨂ d))
@@ -482,7 +482,7 @@ lemma ID.mk.castElim (p : m = n)
   := by cases p; rfl
 
 
-lemma tens_preserve_involutive {n m : ℕ} [CommSemiring α]
+lemma tens_preserve_involutive {n m : ℕ}
   : ∀ (a : Gate n α) (b : Gate m α),
     a.Involutive -> b.Involutive -> Gate.Involutive (a ⨂ b : Gate (n + m) α )
   := by
@@ -586,7 +586,10 @@ lemma separability :
 
 lemma extending_is_tensor_zero : ∀ (σ : QuantumState n α),
   σ.extendRight = σ ⨂ QuantumState.StdStates.Zero α
-  := by simp
+  := by
+    intro σ
+    simp
+    rfl
 
 lemma weak_extension_application :
     ∀(g : Gate n α) (σ : QuantumState n α),

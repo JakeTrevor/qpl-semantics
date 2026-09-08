@@ -21,20 +21,21 @@ set_option linter.unusedSectionVars false
 namespace GESc
 open scoped Gate.App
 
--- the basic idea:
-def measureN (s : GESc X i α) (h : i >= 1) (n : Fin i)
+def measureN (s : GESc X i α) (n : Fin i)
   : GES X i α
-  := match s with
-  | .mk s phi =>
+  := match h : i, s with
+  | 0, _ => nomatch n
+  | x + 1, .mk s phi =>
     let perm : PartialPerm 1 _
       := ⟨fun i : Fin 1 => n, by simp [Function.Injective]⟩
-    let perm := perm.toComplete (by assumption)
+    let prfx : 1 ≤ x + 1 := by simp
+    let perm := perm.toComplete prfx
     let perm := perm.toGate α
     let phi_t :=
-      (perm.transpose * (MTrueLeft i h) * perm) @ phi
+      (perm.transpose * (MTrueLeft (x + 1) prfx) * perm) @ phi
 
     let phi_f :=
-      (perm.transpose * (MFalseLeft i h) * perm) @ phi
+      (perm.transpose * (MFalseLeft (x + 1) prfx) * perm) @ phi
     [⟨s, phi_t⟩, ⟨s, phi_f⟩]
 
 end GESc
@@ -83,10 +84,9 @@ def GES.appGate (xs : GES X i α) (g : Gate i α)
 /-
   Measure the nth qubit in the GES
 -/
-noncomputable -- evil once more
-def GES.measN (xs : GES X i α) (n : Fin i) {h : i >= 1}
+def GES.measN (xs : GES X i α) (n : Fin i)
   : (GES X i α)
-  := xs.flatMap (fun s => GESc.measureN s h n)
+  := xs.flatMap (fun s => GESc.measureN s n)
 
 -- Regular ensemble states are trivially embedded within this
 -- when X = ()
