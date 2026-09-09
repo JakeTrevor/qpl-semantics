@@ -1,6 +1,6 @@
-import Semantics.Permutation.Basic
-import Semantics.Permutation.matrix
-import Semantics.Quantum.Gate
+import Quantum.Permutation.Basic
+import Quantum.Permutation.Matrix
+import Quantum.Gate
 
 variable {α} [CommRing α] [StarRing α]
 set_option linter.unusedSectionVars false

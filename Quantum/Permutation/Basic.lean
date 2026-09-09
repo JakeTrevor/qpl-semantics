@@ -56,7 +56,7 @@ lemma bijective (p : Perm n) : p.1.Bijective := by
   case left => exact p.2
   case right => rfl
 
-def List.mem_finIdxOf?_isSome [BEq α] [LawfulBEq α] {l : List α} {a : α}
+lemma List.mem_finIdxOf?_isSome [BEq α] [LawfulBEq α] {l : List α} {a : α}
   : a ∈ l -> (l.finIdxOf? a).isSome
   := by simp
 
@@ -196,10 +196,10 @@ lemma inv_is_inv3 (p : Perm n) :  p.compose p.invert = id
     rw [Function.comp_apply]
     rw [←inv_is_inv]
 
-def castLT_inj (n m : ℕ) (i j : Fin n) {hi : i < m} {hj : j < m}
+lemma castLT_inj (n m : ℕ) (i j : Fin n)
+  {hi : i < m} {hj : j < m}
   : i.castLT hi = j.castLT hj -> i = j
-  := by
-    simp [Fin.castLT, Fin.val_eq_val]
+  := by simp [Fin.castLT, Fin.val_eq_val]
 
 
 def drop (p : Perm (n + 1))
@@ -246,7 +246,6 @@ def drop (p : Perm (n + 1))
 end Perm
 
 namespace PartialPerm
-
 
 /--
   Do a, then b

@@ -2,17 +2,23 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.LinearAlgebra.Matrix.Kronecker
 import Mathlib.Data.Matrix.Basic
 
-import Semantics.Quantum.Gate
-import Semantics.Quantum.QuantumState
+import Quantum.Gate
+import Quantum.State.DensityOp
 
 open scoped Matrix
 
 variable {α} [CommRing α] [StarRing α]
 
+/-
+Standard basis projector  (|0><0|)
+-/
 def MFalse : Gate 1 α :=
   !![1, 0;
      0, 0]
 
+/-
+Standard basis projector  (|1><1|)
+-/
 def MTrue : Gate 1 α :=
   !![0, 0;
      0, 1]

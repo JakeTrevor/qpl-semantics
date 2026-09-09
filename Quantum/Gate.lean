@@ -2,38 +2,23 @@ import Mathlib.LinearAlgebra.Matrix.Kronecker
 import Mathlib.Data.Matrix.Basic
 import Mathlib.Data.Matrix.Mul
 import Mathlib.Data.Complex.Basic
-import Mathlib.Data.Real.Sqrt
+import Mathlib.Analysis.Real.Sqrt
 import Mathlib.SetTheory.Ordinal.Arithmetic
 
-import Semantics.Quantum.QuantumState
-import Semantics.lib
-
-set_option pp.proofs true
+import Quantum.Lib
+import Quantum.State.DensityOp
 
 open Complex
 open scoped Matrix Kronecker HTensor
+open scoped Matrix.kronecker_flat
 
-instance : Star ℤ where
-  star x := x
+
 
 @[simp]
 abbrev Gate (n : ℕ) (X : Type) := Matrix (QSpace n) (QSpace n) X
 
 variable {α} [instRα: CommRing α] [StarRing α]
 set_option linter.unusedSectionVars false
-
-lemma kronecker_flat.mul
-  (A : Matrix (Fin x) (Fin y) α)
-  (B : Matrix (Fin x') (Fin y') α)
-  (C : Matrix (Fin y) (Fin z) α)
-  (D : Matrix (Fin y') (Fin z') α)
-  : (A ⨂f B) * (C ⨂f D) = (A * C) ⨂f (B * D)
-  := by
-    simp
-    suffices ((Matrix.kroneckerMap (fun x1 x2 ↦ x1 * x2) A B) * (Matrix.kroneckerMap (fun x1 x2 ↦ x1 * x2) C D)) = (Matrix.kroneckerMap (fun x1 x2 ↦ x1 * x2) (A * C) (B * D)) by
-      rw [this]
-    rw [Matrix.mul_kronecker_mul A C B D]
-
 
 namespace Gate
 
@@ -462,7 +447,7 @@ lemma mulTensComm {n m : ℕ}
     simp only [HTensor.tens, Gate.Tensor]
     suffices (a ⨂f b) * (c ⨂f d) = a * c ⨂f b * d by
       rw [←this, kronecker_flat_mul_cast]
-    exact kronecker_flat.mul a b c d
+    exact Matrix.kronecker_flat.mul_distrib a b c d
 
 lemma mulTensCommCast {n m : ℕ}
   {h1 : (n + m) = b }

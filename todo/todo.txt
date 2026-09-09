@@ -1,0 +1,6 @@
+x 2026-09-09 2026-07-21 Figure out how to organise this project
+(A) 2026-07-21 implement instances for semantic subsumption
+(A) 2026-07-21 implement GES stuff
+(B) 2026-09-09 Fix or delete `sorry`s in Quantum.State.DensityOp
+(A) 2026-09-09 Fix `sorry`s in Quantum.Permutation.Gate
+(B) 2026-09-09 Fix or delete `sorry`s in Quantum.Measure

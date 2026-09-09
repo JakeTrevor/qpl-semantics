@@ -1,6 +1,6 @@
 import Mathlib.Analysis.Normed.Ring.Basic
-import Semantics.Quantum.Measure
-import Semantics.Permutation.gate
+import Quantum.Measure
+import Quantum.Permutation.Gate
 
 -- Big idea:
 -- Drop $p$, the probability
