@@ -2,6 +2,7 @@ import Mathlib.Data.Complex.Basic
 import Mathlib.LinearAlgebra.Matrix.Kronecker
 import Mathlib.Data.Matrix.Basic
 
+import Quantum.Permutation.Gate
 import Quantum.Gate
 import Quantum.State.DensityOp
 
@@ -49,6 +50,25 @@ def DensityOp.measureLeft
   let topLeft := x'.subUp.subLeft;
   let bottomRight := x'.subDown.subRight;
   (Matrix.fromBlocks topLeft 0 0 bottomRight).reindex QSpace.coprod_equiv QSpace.coprod_equiv
+
+
+
+/-
+  Measure the Nth qubit
+  usual permutation magic
+-/
+def DensityOp.measureN (n : Fin i)  (x : DensityOp i α)
+  :  DensityOp i α
+  := match i with
+  | 0 => nomatch n
+  | x + 1 =>
+    let perm : PartialPerm 1 _
+      := ⟨fun i : Fin 1 => n, by simp [Function.Injective]⟩
+    let perm := perm.toComplete (by simp)
+    let perm : Gate _ _ := perm.toGate α
+    let iperm : Gate _ _ := perm.transpose
+    iperm.AppDens (perm.AppDens x).measureLeft
+
 
 namespace DensityOp.measureLeft
 
